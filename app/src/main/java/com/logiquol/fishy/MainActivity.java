@@ -3,6 +3,8 @@ package com.logiquol.fishy;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.content.Context;
@@ -12,44 +14,66 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements EntryAdapter.ItemClickListener{
 
     // Permissions
     private static final int PERMISSION_CODE = 100;
     private static final String[] PERMISSIONS = {
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.CAMERA
+            Manifest.permission.CAMERA,
+            Manifest.permission.INTERNET
     };
     private static final int REQUEST_TAKE_PHOTO = 1;
 
     // Logcat debug tag
-    private final String ERROR = "[ERROR]";
-    private final String DEBUG = "[DEBUG]";
+    private static final String TAG = "MainActivity";
+
+    // Recycler view adapter
+    private EntryAdapter adapter;
 
     // Camera button
     private ImageButton cameraButton;
 
+    // Current photo path
     private String currentPhotoPath;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Log.d(TAG, "onCreate: started");
+
         // Request WRITE, READ, CAMERA permissions if needed
         if (!hasPermissions(this, PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_CODE);
         }
+
+        ArrayList<String> entryNames = new ArrayList<>();
+        entryNames.add("Fish 1");
+        entryNames.add("Fish 2");
+        entryNames.add("Fish 3");
+
+        // set up the RecyclerView
+        RecyclerView recyclerView = findViewById(R.id.recycler_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new EntryAdapter(this, entryNames);
+        adapter.setClickListener(this);
+        recyclerView.setAdapter(adapter);
+
 
         cameraButton = (ImageButton)findViewById(R.id.cameraButton);
         cameraButton.setOnClickListener(new View.OnClickListener() {
@@ -58,6 +82,12 @@ public class MainActivity extends AppCompatActivity {
                 dispatchTakePictureIntent();
             }
         });
+
+    }
+
+    @Override
+    public void onItemClick(View view, int position) {
+        Toast.makeText(this, "You clicked " + adapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
     }
 
     /******************************************************
